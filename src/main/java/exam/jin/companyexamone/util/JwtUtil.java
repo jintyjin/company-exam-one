@@ -30,10 +30,9 @@ public class JwtUtil {
         return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("name", String.class);
     }
 
-    public String createJwt(String loginId, String username, Long expireMs) {
+    public String createJwt(String loginId, Long expireMs) {
         return Jwts.builder()
                 .claim("loginId", loginId)
-                .claim("username", username)
                 .expiration(new Date(System.currentTimeMillis() + expireMs))
                 .signWith(secretKey)
                 .compact();
