@@ -13,4 +13,7 @@ public class MemberLoginResponse {
         this.loginId = result.getLoginId();
         this.accessToken = result.getAccessToken();
     }
+
+    public MemberLoginResponse() {
+    }
 }

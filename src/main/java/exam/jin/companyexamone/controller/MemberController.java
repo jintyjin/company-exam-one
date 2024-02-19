@@ -3,6 +3,7 @@ package exam.jin.companyexamone.controller;
 import exam.jin.companyexamone.dto.*;
 import exam.jin.companyexamone.exception.MemberExistsException;
 import exam.jin.companyexamone.service.MemberService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import static java.util.Locale.*;
+import static org.springframework.http.HttpHeaders.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -33,5 +35,11 @@ public class MemberController {
     @PostMapping("/login")
     public MemberLoginResponse login(@Validated @RequestBody MemberLoginRequest request) {
         return new MemberLoginResponse(memberService.login(request));
+    }
+
+    @PostMapping("/info")
+    public CommonResponse<MemberInfoResult> info(HttpServletRequest request) {
+        String accessToken = (String) request.getAttribute(AUTHORIZATION);
+        return new CommonResponse<>("OK", memberService.info(accessToken));
     }
 }
