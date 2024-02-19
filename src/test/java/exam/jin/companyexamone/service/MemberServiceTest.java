@@ -4,6 +4,7 @@ import exam.jin.companyexamone.dto.MemberJoinRequest;
 import exam.jin.companyexamone.dto.MemberJoinResult;
 import exam.jin.companyexamone.dto.MemberLoginRequest;
 import exam.jin.companyexamone.dto.MemberLoginResult;
+import exam.jin.companyexamone.dto.*;
 import exam.jin.companyexamone.entity.Member;
 import exam.jin.companyexamone.exception.MemberCanNotFindException;
 import exam.jin.companyexamone.repository.MemberRepository;
@@ -110,7 +111,7 @@ class MemberServiceTest {
         when(passwordEncoder.matches(any(String.class), any(String.class)))
                 .thenReturn(true);
 
-        when(jwtUtil.createJwt(any(String.class), any(String.class), any(Long.class)))
+        when(jwtUtil.createJwt(any(String.class), any(Long.class)))
                 .thenReturn("accessToken");
 
         //when
@@ -155,6 +156,49 @@ class MemberServiceTest {
 
         //when //then
         assertThatThrownBy(() -> memberService.login(request))
+                .isInstanceOf(MemberCanNotFindException.class);
+    }
+
+    @Test
+    @DisplayName("정보 가져오기 성공")
+    void infoSuccess() {
+        //given
+        String accessToken = "accessToken";
+        String loginId = "hong12";
+        String password = "123123";
+        String username = "홍길동";
+        when(jwtUtil.getLoginId(any(String.class)))
+                .thenReturn(loginId);
+
+        when(memberRepository.findByLoginId(any(String.class)))
+                .thenReturn(of(new Member(loginId, password, username)));
+
+        when(jwtUtil.isExpired(any(String.class)))
+                .thenReturn(false);
+
+        //when
+        MemberInfoResult result = memberService.info(accessToken);
+
+        //then
+        assertThat(result.getLoginId()).isEqualTo(loginId);
+        assertThat(result.getUsername()).isEqualTo(username);
+        assertThat(result.getAccessToken()).isEqualTo(accessToken);
+    }
+
+    @Test
+    @DisplayName("정보 가져오기 실패")
+    void infoFailed() {
+        //given
+        String accessToken = "accessToken";
+        String loginId = "hong12";
+        when(jwtUtil.getLoginId(any(String.class)))
+                .thenReturn(loginId);
+
+        when(memberRepository.findByLoginId(any(String.class)))
+                .thenReturn(ofNullable(null));
+
+        //when //then
+        assertThatThrownBy(() -> memberService.info(accessToken))
                 .isInstanceOf(MemberCanNotFindException.class);
     }
 }
