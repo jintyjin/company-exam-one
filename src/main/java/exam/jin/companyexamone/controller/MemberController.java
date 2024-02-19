@@ -1,8 +1,6 @@
 package exam.jin.companyexamone.controller;
 
-import exam.jin.companyexamone.dto.CommonResponse;
-import exam.jin.companyexamone.dto.MemberJoinRequest;
-import exam.jin.companyexamone.dto.MemberJoinResult;
+import exam.jin.companyexamone.dto.*;
 import exam.jin.companyexamone.exception.MemberExistsException;
 import exam.jin.companyexamone.service.MemberService;
 import lombok.RequiredArgsConstructor;
@@ -30,5 +28,10 @@ public class MemberController {
         } catch (DataIntegrityViolationException exception) {
             throw new MemberExistsException(request, messageSource.getMessage("member.duplicated", null, KOREAN));
         }
+    }
+
+    @PostMapping("/login")
+    public MemberLoginResponse login(@Validated @RequestBody MemberLoginRequest request) {
+        return new MemberLoginResponse(memberService.login(request));
     }
 }
