@@ -1,12 +1,11 @@
 package exam.jin.companyexamone.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import exam.jin.companyexamone.dto.MemberJoinRequest;
-import exam.jin.companyexamone.dto.MemberJoinResult;
-import exam.jin.companyexamone.dto.MemberLoginRequest;
-import exam.jin.companyexamone.dto.MemberLoginResult;
+import exam.jin.companyexamone.dto.*;
 import exam.jin.companyexamone.entity.Member;
 import exam.jin.companyexamone.exception.MemberCanNotFindException;
+import exam.jin.companyexamone.filter.ExceptionHandlerFilter;
+import exam.jin.companyexamone.filter.LoginFilter;
 import exam.jin.companyexamone.service.MemberService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,16 +14,23 @@ import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfi
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.MessageSource;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import static java.util.Locale.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.http.HttpHeaders.*;
 import static org.springframework.http.MediaType.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(controllers = {MemberController.class}, excludeAutoConfiguration = SecurityAutoConfiguration.class)
+@WebMvcTest(controllers = {MemberController.class},
+        excludeAutoConfiguration = SecurityAutoConfiguration.class
+, excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE,
+        classes = {ExceptionHandlerFilter.class, LoginFilter.class}
+))
 class MemberControllerTest {
 
     @MockBean
@@ -150,6 +156,65 @@ class MemberControllerTest {
         ResultActions resultActions = mockMvc.perform(post(url)
                 .contentType(APPLICATION_JSON)
                 .content(content));
+
+        //then
+        resultActions.andExpectAll(
+                status().isBadRequest(),
+                jsonPath("$.message").value(messageSource.getMessage("member.loginFail", null, KOREAN))
+        );
+    }
+
+    @Test
+    @DisplayName("정보 가져오기 성공")
+    void infoSuccess() throws Exception {
+        //given
+        String url = "/api/member/info";
+
+        String loginId = "hong12";
+        String password = "123123";
+        String username = "홍길동";
+        String token = "accessToken";
+
+        when(memberService.info(any(String.class)))
+                .thenReturn(new MemberInfoResult(loginId, username, token));
+
+        //when
+        ResultActions resultActions = mockMvc.perform(post(url)
+                .contentType(APPLICATION_JSON)
+                .requestAttr(AUTHORIZATION, token)
+        );
+
+        //then
+        resultActions.andExpectAll(
+                status().isOk(),
+                jsonPath("$.data.loginId").value(loginId),
+                jsonPath("$.data.username").value(username),
+                jsonPath("$.data.accessToken").value(token)
+        );
+    }
+
+    @Test
+    @DisplayName("정보 가져오기 실패")
+    void infoFailed() throws Exception {
+        //given
+        String url = "/api/member/info";
+
+        String loginId = "hong12";
+        String password = "123123";
+        String username = "홍길동";
+        String token = "accessToken";
+
+        MemberCanNotFindException exception =
+                new MemberCanNotFindException(messageSource.getMessage("member.loginFail", null, KOREAN));
+
+        when(memberService.info(any(String.class)))
+                .thenThrow(exception);
+
+        //when
+        ResultActions resultActions = mockMvc.perform(post(url)
+                .contentType(APPLICATION_JSON)
+                .requestAttr(AUTHORIZATION, token)
+        );
 
         //then
         resultActions.andExpectAll(
