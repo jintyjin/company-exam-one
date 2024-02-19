@@ -3,7 +3,10 @@ package exam.jin.companyexamone.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import exam.jin.companyexamone.dto.MemberJoinRequest;
 import exam.jin.companyexamone.dto.MemberJoinResult;
+import exam.jin.companyexamone.dto.MemberLoginRequest;
+import exam.jin.companyexamone.dto.MemberLoginResult;
 import exam.jin.companyexamone.entity.Member;
+import exam.jin.companyexamone.exception.MemberCanNotFindException;
 import exam.jin.companyexamone.service.MemberService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -92,6 +95,66 @@ class MemberControllerTest {
                 status().isBadRequest(),
                 jsonPath("$.message").value(messageSource.getMessage("member.duplicated", null, KOREAN)),
                 jsonPath("$.data.loginId").value(loginId)
+        );
+    }
+
+    @Test
+    @DisplayName("회원 로그인 성공")
+    void loginSuccess() throws Exception{
+        //given
+        String url = "/api/member/login";
+
+        String loginId = "hong12";
+        String password = "123123";
+
+        MemberLoginRequest request = new MemberLoginRequest(loginId, password);
+
+        when(memberService.login(any(MemberLoginRequest.class)))
+                .thenReturn(new MemberLoginResult(loginId, "accessToken"));
+
+        String content = objectMapper.writeValueAsString(request);
+
+        //when
+        ResultActions resultActions = mockMvc.perform(post(url)
+                .contentType(APPLICATION_JSON)
+                .content(content));
+
+        //then
+        resultActions.andExpectAll(
+                status().isOk(),
+                jsonPath("$.loginId").value(loginId),
+                jsonPath("$.accessToken").value("accessToken")
+        );
+    }
+
+    @Test
+    @DisplayName("회원 로그인 실패")
+    void loginFailed() throws Exception{
+        //given
+        String url = "/api/member/login";
+
+        String loginId = "hong12";
+        String password = "123123";
+
+        MemberLoginRequest request = new MemberLoginRequest(loginId, password);
+
+        MemberCanNotFindException exception =
+                new MemberCanNotFindException(messageSource.getMessage("member.loginFail", null, KOREAN));
+
+        when(memberService.login(any(MemberLoginRequest.class)))
+                .thenThrow(exception);
+
+        String content = objectMapper.writeValueAsString(request);
+
+        //when
+        ResultActions resultActions = mockMvc.perform(post(url)
+                .contentType(APPLICATION_JSON)
+                .content(content));
+
+        //then
+        resultActions.andExpectAll(
+                status().isBadRequest(),
+                jsonPath("$.message").value(messageSource.getMessage("member.loginFail", null, KOREAN))
         );
     }
 }
