@@ -10,7 +10,7 @@ public class Member {
     @Column(name = "member_id")
     private Long id;
 
-    @Column(name = "member_loginId")
+    @Column(name = "member_loginId", unique = true)
     private String loginId;
 
     @Column(name = "member_password")
