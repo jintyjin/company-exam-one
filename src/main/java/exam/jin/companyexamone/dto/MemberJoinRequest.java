@@ -1,11 +1,9 @@
 package exam.jin.companyexamone.dto;
 
 import jakarta.validation.constraints.NotEmpty;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
 
-@AllArgsConstructor
-@Getter
+@Data
 public class MemberJoinRequest {
 
     @NotEmpty
@@ -16,4 +14,10 @@ public class MemberJoinRequest {
 
     @NotEmpty
     private String username;
+
+    public MemberJoinRequest(String loginId, String password, String username) {
+        this.loginId = loginId;
+        this.password = password;
+        this.username = username;
+    }
 }

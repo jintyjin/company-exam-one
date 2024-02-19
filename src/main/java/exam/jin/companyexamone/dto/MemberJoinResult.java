@@ -1,11 +1,9 @@
 package exam.jin.companyexamone.dto;
 
 import exam.jin.companyexamone.entity.Member;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
 
-@AllArgsConstructor
-@Getter
+@Data
 public class MemberJoinResult {
 
     private Long id;
